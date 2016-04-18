@@ -45,7 +45,14 @@ define(function(require, exports, module) {
             };
             for (var key in options.vfs)
                 vfsOptions[key] = options.vfs[key];
-                
+            
+            console.log('\r\n options')
+            console.log(options)
+            
+            vfsOptions.readOnly = options.readonly;
+            console.log('\r\n vfs options')
+            console.log(vfsOptions)
+            
             var master = new Parent(vfsOptions);
             master.connect(function(err, vfs) {
                 if (err) return callback(err);
@@ -56,9 +63,10 @@ define(function(require, exports, module) {
                     projectDir: vfsOptions.projectDir,
                     extendDirectory: options.extendDirectory,
                     extendOptions: projectOptions.extendOptions,
-                    extendToken: "not_needed",
+                    extendToken: "token",
                     collab: options.collab,
                     vfsOptions: vfsOptions,
+                    readonly: options.readonly,
                     public: true
                 }));
             });

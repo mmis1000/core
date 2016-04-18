@@ -24,6 +24,8 @@ function plugin(options, imports, register) {
     var previewHandler = imports["preview.handler"];
     var statics = imports["connect.static"];
     
+    console.log(options)
+    
     assert(options.workspaceDir, "Option 'workspaceDir' is required");
     assert(options.options, "Option 'options' is required");
     
@@ -297,7 +299,7 @@ function plugin(options, imports, register) {
                     id: pid,
                     name: pid + "-" + options._projects[pid]
                 },
-                readonly: user.id > 100
+                readonly: options.readonly
             }
         };
     };    
@@ -386,6 +388,7 @@ function getConfig(configName, options) {
         settings[type] = data;
     }
     options.options.settings = settings;
-    
-    return require(filename)(options.options);
+    var temp = require(filename)(options.options);
+    console.log(temp);
+    return temp;
 }

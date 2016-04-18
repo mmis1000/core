@@ -64,8 +64,16 @@ module.exports = function(config, optimist) {
     var port = argv.p;
     var host = argv.l;
     var debug = argv.d;
-    var readonly = argv.readonly;
+    var readonly = !!argv.readonly;
     var startBridge = argv.b;
+    
+    console.log('DEBUG: is readonly ' + readonly);
+    config.readonly = readonly;
+    config.vfs = {
+        readonly: readonly
+    }
+    config.extendOptions.readonly = readonly;
+    config.isAdmin = !readonly;
     
     config.port = port || argv.port;
     config.host = host || argv.listen;
