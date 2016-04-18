@@ -45,14 +45,9 @@ define(function(require, exports, module) {
             };
             for (var key in options.vfs)
                 vfsOptions[key] = options.vfs[key];
-            
-            console.log('\r\n options')
-            console.log(options)
-            
+
             vfsOptions.readOnly = options.readonly;
-            console.log('\r\n vfs options')
-            console.log(vfsOptions)
-            
+
             var master = new Parent(vfsOptions);
             master.connect(function(err, vfs) {
                 if (err) return callback(err);

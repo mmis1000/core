@@ -23,9 +23,7 @@ var frontdoor = require("frontdoor");
 function plugin(options, imports, register) {
     var previewHandler = imports["preview.handler"];
     var statics = imports["connect.static"];
-    
-    console.log(options)
-    
+
     assert(options.workspaceDir, "Option 'workspaceDir' is required");
     assert(options.options, "Option 'options' is required");
     
@@ -388,7 +386,6 @@ function getConfig(configName, options) {
         settings[type] = data;
     }
     options.options.settings = settings;
-    var temp = require(filename)(options.options);
-    console.log(temp);
-    return temp;
+    
+    return require(filename)(options.options);
 }
