@@ -13,6 +13,7 @@ function main(options, imports, register) {
     var path = require("path");
     var mkdirp = require("mkdirp");
     var error = require("http-error");
+    var UglifyJS = require("uglify-js");
     
     /***** Initialization *****/
     
@@ -21,6 +22,7 @@ function main(options, imports, register) {
     var settings = options.settings || "devel";
     var staticsConfig;
     var cache;
+    var bootloaderCache;
     
     var plugin = new Plugin("Mmis1000.me", main.consumes);
     
@@ -29,10 +31,29 @@ function main(options, imports, register) {
     function init(callback) {
         fs.readFile(path.join(cacheDir, options.version, 'ssh', 'dep.js'), function(err, content) {
             if (!err && content) {
-                cache = content
+                cache = content.toString('utf8')
             }
-            callback();
+            fs.readFile(path.join(cacheDir, options.version, 'ssh', 'bootloader.js'), function(err, content) {
+                if (!err && content) {
+                    bootloaderCache = content.toString('utf8')
+                }
+                callback();
+            })
         })
+    }
+    
+    
+    function makeid(length) {
+      length = length || 16
+      
+      var text = "";
+      var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    
+      for( var i = 0; i < length; i++ ) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
+      
+      return text;
     }
     
     function buildSshRemoteDep(callback) {
@@ -103,8 +124,33 @@ function main(options, imports, register) {
         })
     }
     
-    function buildSshRemoteMain() {
-        
+    function buildSshRemoteMain(options, callback) {
+        var orig_code = "require('./slave')(" + JSON.stringify(options) + ");"
+        var res = UglifyJS.minify(orig_code, {fromString: true}).code;
+        callback(null, res)
+    }
+    
+    function buildBootloader(callback) {
+        if (bootloaderCache) {
+            console.log('Serve boot loader command from cache');
+            return callback(null, bootloaderCache)
+        }
+        fs.readFile(path.resolve(__dirname, 'remote_bootloader.js'), function (err, orig_code) {
+            if (err) return callback(err);
+            orig_code = orig_code.toString('utf8')
+            var new_code = 
+                UglifyJS.minify(orig_code, {fromString: true}).code
+                .replace("'", '"') 
+                .replace("CACHE_ID", makeid(32));
+            bootloaderCache = new_code
+            
+            fs.writeFile(path.join(cacheDir, options.version, 'ssh', 'bootloader.js'), new_code, function(err) {
+                if (err) {
+                    callback(err);
+                }
+                callback(null, new_code);
+            })
+        })
     }
     
     function getStaticsConfig(callback) {
@@ -202,6 +248,7 @@ function main(options, imports, register) {
     plugin.freezePublicAPI({
         buildSshRemoteDep: buildSshRemoteDep,
         buildSshRemoteMain: buildSshRemoteMain,
+        buildBootloader: buildBootloader,
         get cacheDir() { return cacheDir; },
         get version() { return options.version; }
     });

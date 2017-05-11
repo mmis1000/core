@@ -4,7 +4,7 @@
  * @copyright 2013, Ajax.org B.V.
  */
 define(function(require, exports, module) {
-    main.consumes = ["Plugin", "api"];
+    main.consumes = ["Plugin", "api", "me.mmis1000.ssh.vfs"];
     main.provides = ["vfs.connect"];
     return main;
 
@@ -15,7 +15,8 @@ define(function(require, exports, module) {
 
         var Vfs = require("./vfs");
         var Parent = require('vfs-child').Parent;
-
+        var getSshVfs = imports["me.mmis1000.ssh.vfs"].getSshVfs;
+        
         /***** Initialization *****/
         
         var plugin = new Plugin("Ajax.org", main.consumes);
@@ -45,23 +46,39 @@ define(function(require, exports, module) {
             };
             for (var key in options.vfs)
                 vfsOptions[key] = options.vfs[key];
-                
-            var master = new Parent(vfsOptions);
-            master.connect(function(err, vfs) {
-                if (err) return callback(err);
-                
-                callback(null, new Vfs(vfs, master, {
-                    debug: options.debug || false,
-                    homeDir: vfsOptions.homeDir,
-                    projectDir: vfsOptions.projectDir,
-                    extendDirectory: options.extendDirectory,
-                    extendOptions: projectOptions.extendOptions,
-                    collab: options.collab,
-                    vfsOptions: vfsOptions,
-                    public: true
-                }));
-            });
             
+            if (!options.sshWorkspace) {
+                var master = new Parent(vfsOptions);
+                master.connect(function(err, vfs) {
+                    if (err) return callback(err);
+                    
+                    callback(null, new Vfs(vfs, master, {
+                        debug: options.debug || false,
+                        homeDir: vfsOptions.homeDir,
+                        projectDir: vfsOptions.projectDir,
+                        extendDirectory: options.extendDirectory,
+                        extendOptions: projectOptions.extendOptions,
+                        collab: options.collab,
+                        vfsOptions: vfsOptions,
+                        public: true
+                    }));
+                });
+            } else {
+                getSshVfs(vfsOptions, function (err, vfs, transport, remoteVfsOptions) {
+                    if (err) return callback(err);
+                    
+                    callback(null, new Vfs(vfs, transport, {
+                        debug: options.debug || false,
+                        homeDir: remoteVfsOptions.homeDir,
+                        projectDir: remoteVfsOptions.projectDir,
+                        extendDirectory: remoteVfsOptions.extendDirectory,
+                        extendOptions: projectOptions.extendOptions,
+                        collab: options.collab,
+                        vfsOptions: remoteVfsOptions,
+                        public: true
+                    }));
+                })
+            }
             return function cancel() {};
         }
         

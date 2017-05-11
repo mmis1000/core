@@ -21,8 +21,10 @@
     if (matchedPosition > 0) {
       data += buf.toString("utf8", 0, matchedPosition);
     }
+    
     var line = buf.slice(matchedPosition + 1);
     if (scriptMain) {
+      console.log('got dep');
       if (!scriptDep) {
         scriptDep = data;
         fs.writeFile(dirname + basename + filename, scriptDep, "utf8", function(err, unknown) {
@@ -40,6 +42,7 @@
         });
       }
     } else {
+      console.log('got main');
       scriptMain = data;
       /** @type {string} */
       data = "";
@@ -80,6 +83,7 @@
   }
   if (!scriptDep) {
     stdout.write("\u0001\x00");
+    console.log('no dep');
   }
   stdin.on("data", next);
   stdin.resume();

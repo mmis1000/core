@@ -1,5 +1,12 @@
 module.exports = function(config, optimist) {
     
+    function homeDir(account) {
+        if (account === 'root') {
+            return '/root'
+        }
+        return '/home/' + account
+    }
+    
     var path = require("path");
     
     if (!optimist.local) {
@@ -41,7 +48,17 @@ module.exports = function(config, optimist) {
             .boolean("inProcessLocalFs")
             .describe("inProcessLocalFs", "Whether to run localfs in same process for debugging.")
             .default("inProcessLocalFs", config.inProcessLocalFs)
-            .boolean("useBrowserCache");
+            .boolean("useBrowserCache")
+            .boolean("sshWorkspace")
+            .describe("sshWorkspace", "use remote workspace")
+            .default("sshHost", "127.0.0.1:22")
+            .describe("sshHost", "ssh workspace host")
+            .default("sshAccount", "root")
+            .describe("sshAccount", "ssh account")
+            .default("keyFile", path.resolve(process.env.HOME, '.ssh/id_rsa'))
+            .describe("keyFile", "key file to connect to remote host")
+            .default("sshNodePath", "/usr/local/bin/node")
+            .describe("sshNodePath", "node path of remote server");
     }
     
     var argv = optimist.argv;
@@ -83,6 +100,12 @@ module.exports = function(config, optimist) {
     config.projectName = path.basename(baseProc);
     config.testing = testing;
     config.debug = debug;
+    
+    config.sshWorkspace = argv.sshWorkspace;
+    config.sshHost = argv.sshHost;
+    config.keyFile = argv.keyFile;
+    config.sshNodePath = argv.sshNodePath;
+    config.sshAccount = argv.sshAccount;
     
     if (!config.startBridge)
         config.startBridge = startBridge;
@@ -210,7 +233,8 @@ module.exports = function(config, optimist) {
                 local: config.local,
                 debug: debug,
                 inProcess: argv.inProcessLocalFs
-            }
+            },
+            sshWorkspace: config.sshWorkspace
         /* ### BEGIN #*/
         }, {
             packagePath: "./c9.static/cdn",
@@ -224,6 +248,51 @@ module.exports = function(config, optimist) {
             baseUrl: config.cdn.baseUrl,
             virtual: config.cdn.virtual,
             config: "standalone"
+        }, {
+            packagePath: "./c9.static.ssh/build",
+            version: config.cdn.version,
+            cache: config.cdn.cacheDir,
+            compress: config.cdn.compress,
+            baseUrl: config.cdn.baseUrl,
+            virtual: config.cdn.virtual,
+            config: "standalone"
+        }, {
+            packagePath: "./c9.static.ssh/vfs_ssh.js",
+            config: "standalone",
+            host: config.sshHost,
+            keyFile: config.keyFile,
+            account: config.sshAccount,
+            nodePath: config.sshNodePath,
+            vfsOptions: {
+                "pingInterval": 5000,
+                "homeDir": homeDir(config.sshAccount),
+                "nodePath": homeDir(config.sshAccount) + "/.c9/node_modules",
+                "tmuxBin": homeDir(config.sshAccount) + "/.c9/bin/tmux",
+                "root": "/",
+                "debug": true,
+                "connectionTimeout": 60000,
+                "sshConnectTimeout": 30000,
+                "metapath": "/.c9/metadata",
+                "wsmetapath": "/.c9/metadata/workspace",
+                "projectDir": baseProc,
+                "extendDirectory": homeDir(config.sshAccount) + "/.c9/plugins",
+                "extendApi":{
+                    "collab":{
+                        "file":"c9.ide.collab/server/collab-server.js",
+                        "user": config.extendOptions.user,
+                        "project ": config.extendOptions.project,
+                        "readonly": false,
+                        "nodePath": homeDir(config.sshAccount) + "/.c9/node_modules"
+                        
+                    },
+                    "pubsub":{"file":"c9.ide.pubsub/pubsub-service.js"},
+                    "ping":{"file":"c9.vfs.client/ping-service.js"}
+                },
+                "defaultEnv":{
+                    "PORT":"8080",
+                    "IP":"127.0.0.1",
+                }
+            }
         /* ### END #*/
         }
     ];
