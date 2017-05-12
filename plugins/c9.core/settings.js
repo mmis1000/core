@@ -36,6 +36,7 @@ define(function(require, exports, module) {
         var debugMode = c9.location.indexOf("debug=2") > -1; 
         var testing = options.testing;
         var debug = options.debug;
+        var isRemoteWOrkspace = options.isRemoteWOrkspace;
         
         // do not leave reset= in url
         if (resetSettings && window.history)
@@ -62,6 +63,14 @@ define(function(require, exports, module) {
             PATH[type] = PATH[type].replace(/.settings$/, function() { return "." + val + ".settings"; });
             skipCloud[type] = true;
         });
+        
+        if (isRemoteWOrkspace) {
+            KEYS.forEach(function (type) {
+                if (!skipCloud[type]) {
+                    skipCloud[type] = true;
+                }
+            })
+        }
         
         var inited = false;
         function loadSettings(json) {

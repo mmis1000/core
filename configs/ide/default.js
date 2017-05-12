@@ -33,6 +33,7 @@ module.exports = function(options) {
     var runners = options.runners || {};
     var builders = options.builders || {};
     var hosted = !options.local && !options.standalone && !options.dev;
+    // var hosted = (!options.local && !options.standalone && !options.dev) || options.sshWorkspace;
     var devel = options.standalone && !options.local || options.mode === "devel" || options.mode == "onlinedev" || options.dev;
     
     var localExtendFiles = options.localExtend || options.standalone;
@@ -69,7 +70,8 @@ module.exports = function(options) {
             packagePath: "plugins/c9.core/settings",
             settings: options.settings,
             userConfigPath: options.settingDir,
-            hosted: hosted
+            hosted: hosted,
+            isRemoteWOrkspace: options.sshWorkspace
         },
         "plugins/c9.core/ext",
         {
@@ -834,7 +836,9 @@ module.exports = function(options) {
             revision: options.manifest.revision
         });
     }
+    
     if (!hosted) {
+    // if (!hosted || options.sshWorkspace) {
         plugins.push(
             "plugins/c9.ide.analytics/mock_analytics",
             "plugins/c9.ide.services/linked-services-mock"
