@@ -98,7 +98,9 @@ function main(options, imports, register) {
             newOptions.defaultEnv[key] =  vfsOptions.defaultEnv[key]
         }
         
+        newOptions.local = false,
         newOptions.projectDir = vfsOptions.projectDir
+        newOptions.debug = vfsOptions.debug
         
         console.log(newOptions)
         

@@ -204,7 +204,8 @@ module.exports = function(config, optimist) {
             projectUrl: config.projectUrl,
             homeUrl: config.homeUrl,
             workspaceType: workspaceType,
-            readonly: readonly
+            readonly: readonly,
+            sshWorkspace: config.sshWorkspace
         },
         "./c9.vfs.server/vfs.server",
         "./c9.error/logger.raygun_noop",
@@ -267,7 +268,12 @@ module.exports = function(config, optimist) {
                 "pingInterval": 5000,
                 "homeDir": homeDir(config.sshAccount),
                 "nodePath": homeDir(config.sshAccount) + "/.c9/node_modules",
+                "nodeBin": [
+                    homeDir(config.sshAccount) + "/.c9/node/bin/node",
+                    config.sshNodePath
+                ],
                 "tmuxBin": homeDir(config.sshAccount) + "/.c9/bin/tmux",
+                "nakBin": homeDir(config.sshAccount) + "/.c9/node_modules/.bin/nak",
                 "root": "/",
                 "debug": true,
                 "connectionTimeout": 60000,
